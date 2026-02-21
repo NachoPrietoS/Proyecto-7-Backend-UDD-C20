@@ -2,6 +2,18 @@ const mongoose = require("mongoose");
 
 const gameSchema = mongoose.Schema(
     {
+        idProd: {
+            type: String,
+            required: true,
+        },
+        priceId: {
+            type: String,
+            required: true,
+        },
+        currency: {
+            type: String,
+            required: true,
+        },
         title: {
             type: String,
             required: true
@@ -16,6 +28,15 @@ const gameSchema = mongoose.Schema(
         },
         description: {
             type: String
+        },
+        img: {
+            type: String,
+            required: true
+        },
+        slug: {
+            type: String,
+            required: true,
+            unique: true
         }
     },
     {

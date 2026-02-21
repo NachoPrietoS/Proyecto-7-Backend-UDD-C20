@@ -1,4 +1,5 @@
 const Game = require('../models/Games');
+const stripe = require('stripe')(process.env.STRIPE_KEY);
 
 exports.getAllGames = async (req, res) => {
     try {
@@ -11,8 +12,34 @@ exports.getAllGames = async (req, res) => {
 
 exports.createGame = async (req, res) => {
     try {
-            const { title, price, platform } = req.body;
-            const newGame = await Game.create({ title, price, platform });
+            const { title, price, platform, description, img, slug, currency } = req.body;
+            const game = await stripe.products.create({
+                name: title,
+                description,
+                images: [img],
+                metadata: {
+                    productDescription: description,
+                    slug
+                }
+            });
+
+            const stripePrice = await stripe.prices.create({
+                unit_amount: price,
+                currency,
+                product: game.id
+            })
+
+            const newGame = await Game.create({ 
+                idProd: game.id,
+                priceId: stripePrice.id,
+                title,
+                price,
+                platform,
+                description,
+                img,
+                slug,
+                currency,
+            });
             if (!newGame) return res.status(400).json({ message: 'No se pudo crear el juego' });
             return res.status(201).json({ message: 'Juego creado exitosamente', game: newGame });
         } catch (error) {
