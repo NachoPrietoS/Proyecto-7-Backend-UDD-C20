@@ -31,8 +31,8 @@ exports.createCheckoutSession = async (req, res) =>{
 
 exports.getCart = async (req, res) => {
     const userID = req.user.id;
-    const foundUser = await User.findOne({ _id: userID });
-    const foundCart = await Cart.findOne(foundUser.cart)
+    const foundUser = await User.findById(userID);
+    const foundCart = await Cart.findById(foundUser.cart);
     res.json({foundCart});
 }
 
