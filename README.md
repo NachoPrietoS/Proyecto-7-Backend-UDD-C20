@@ -42,7 +42,7 @@ crea un archivo .env y configura los siguientes parámetros esenciales:
 PORT=4000
 MONGODB_URI=tu_conexion_mongo_atlas
 SECRET_KEY_JWT=tu_llave_secreta
-STRIPE_SECRET_KEY=tu_sk_test_de_stripe
+STRIPE_KEY=tu_sk_test_de_stripe
 FRONTEND_URL=http://localhost:5173
 
 4. **Iniciar servidor:**
