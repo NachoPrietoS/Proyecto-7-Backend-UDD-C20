@@ -13,13 +13,13 @@ exports.registerUser = async (req, res) => {
         const hashedPassword = await bcryptjs.hash(password, salt);
         const newCart = await Cart.create({});
 
-        const newUser = await User.create({ 
+        const newUser = await User.create({
             username,
             email,
             password: hashedPassword,
             cart: newCart
         });
-        
+
         if (!newUser) return res.status(400).json({ message: 'No se pudo crear el usuario' });
         return res.status(201).json({ message: 'Usuario creado exitosamente', user: newUser });
     } catch (error) {
@@ -29,21 +29,21 @@ exports.registerUser = async (req, res) => {
 
 exports.loginUser = async (req, res) => {
     const { email, password } = req.body;
-        try {
-            let foundUser = await User.findOne({ email });
-            if (!foundUser) return res.status(400).json({ message: 'Usuario no existe' });
-    
-            const correctPassword = await bcryptjs.compare(password, foundUser.password);
-            if (!correctPassword) return res.status(400).json({ message: 'El email o la password no corresponde' });
-    
-            const payload = { user: { id: foundUser._id } };
-            jwt.sign(payload, process.env.SECRET, { expiresIn: '1h' }, (error, token) => {
-                if (error) throw error;
-                res.json({ token })
-            });
-        } catch (error) {
-            res.json({ message: 'hubo un error al iniciar sesión', error: error.message });
-        }
+    try {
+        let foundUser = await User.findOne({ email });
+        if (!foundUser) return res.status(400).json({ message: 'Usuario no existe' });
+
+        const correctPassword = await bcryptjs.compare(password, foundUser.password);
+        if (!correctPassword) return res.status(400).json({ message: 'El email o la password no corresponde' });
+
+        const payload = { user: { id: foundUser._id } };
+        jwt.sign(payload, process.env.SECRET, { expiresIn: '1h' }, (error, token) => {
+            if (error) throw error;
+            res.json({ token })
+        });
+    } catch (error) {
+        res.json({ message: 'hubo un error al iniciar sesión', error: error.message });
+    }
 }
 
 exports.verifyUser = async (req, res) => {
@@ -57,18 +57,50 @@ exports.verifyUser = async (req, res) => {
 
 exports.updateUserById = async (req, res) => {
     try {
-        const { username, email, password } = req.body;
-        const salt = await bcryptjs.genSalt(10);
-        const hashedPassword = await bcryptjs.hash(password, salt);
+        const { username, email, password, country, address, zipcode, phone } = req.body;
+        const userId = req.user.id;
+        // 1. Buscamos al usuario actual
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ message: 'Usuario no encontrado' });
+        // 2. Preparamos el objeto de actualización
+        const updateData = {
+            username: username || user.username,
+            email: email || user.email,
+            country: country !== undefined ? country : user.country,
+            address: address !== undefined ? address : user.address,
+            zipcode: zipcode !== undefined ? zipcode : user.zipcode,
+            phone: phone !== undefined ? phone : user.phone
+        };
+        // 3. SOLO si el usuario mandó una password nueva, la encriptamos
+        if (password && password.trim() !== "") {
+            const salt = await bcryptjs.genSalt(10);
+            updateData.password = await bcryptjs.hash(password, salt);
+        }
+        // 4. Actualizamos usando findByIdAndUpdate con las opciones correctas
         const updatedUser = await User.findByIdAndUpdate(
-            req.user.id,
-            { username, email, password: hashedPassword },
-            { new: true, runValidators: true }
-        );
-        if (!updatedUser) return res.status(404).json({ message: 'Usuario no encontrado' });
-        return res.status(200).json({ message: 'Usuario actualizado exitosamente', user: updatedUser });
+            userId,
+            { $set: updateData },
+            {
+                returnDocument: 'after', // El nuevo estándar que pedía Mongoose
+                runValidators: true
+            }
+        ).select("-password");
+        return res.status(200).json({
+            message: 'Usuario actualizado exitosamente',
+            user: updatedUser
+        });
     } catch (error) {
-        res.status(500).json({ message: 'hubo un error al actualizar el usuario', error: error.message });
+        // Si el error es por nombre duplicado (E11000)
+        if (error.code === 11000) {
+            return res.status(400).json({
+                message: 'El nombre de usuario o email ya está en uso.'
+            });
+        }
+        console.error("Error en el Backend:", error.message);
+        res.status(500).json({
+            message: 'Hubo un error al actualizar el usuario',
+            error: error.message
+        });
     }
 }
 
