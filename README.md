@@ -1,69 +1,71 @@
-# Proyecto-6-UDD-C20
+# 🎮 GAMERSHOP API - Backend
 
-API REST simple para manejar usuarios, juegos y carritos (Node.js + Express + MongoDB).
+Construida con Node.js y Express, gestiona la lógica de negocio, autenticación de usuarios, persistencia de datos en MongoDB y la integración con la pasarela de pagos Stripe.
 
-**Prerrequisitos**
-- **Node.js**: v16+ recomendado
-- **npm**: incluido con Node.js
-- **MongoDB Atlas** o una instancia de MongoDB accesible
+---
 
-**Copiar el proyecto**
-```bash
-git clone <TU_REPO_URL>
-cd Proyecto-6-UDD-C20
-```
+## 🛠️ Tecnologías y Herramientas
 
-**Instalar dependencias**
-```bash
+- **Node.js & Express:** Framework principal para el servidor.
+- **MongoDB & Mongoose:** Base de datos NoSQL y modelado de esquemas.
+- **JWT (JSON Web Tokens):** Manejo de sesiones y seguridad.
+- **bcryptjs:** Encriptación de contraseñas.
+- **Stripe:** Procesamiento de pagos en modo de pruebas.
+- **CORS & Dotenv:** Gestión de seguridad de dominios y variables de entorno.
+
+---
+
+## 📂 Estructura del Servidor
+
+El backend sigue una arquitectura limpia y modular:
+
+- **`/src/models`**: Definición de esquemas de datos (Users, Games, Cart).
+- **`/src/controllers`**: Lógica de las funciones que responden a cada ruta.
+- **`/src/routes`**: Definición de los endpoints de la API divididos por dominios.
+- **`/src/middleware`**: Funciones de protección de rutas (verificación de tokens).
+- **`/src/config`**: Configuración de la conexión a la base de datos.
+
+---
+
+## ⚙️ Configuración e Instalación
+
+1. **Clonar el repositorio:**
+   bash
+   git clone [https://github.com/nachoprietos/proyecto-7-backend-udd-c20.git](https://github.com/nachoprietos/proyecto-7-backend-udd-c20.git)
+   cd proyecto-7-backend-udd-c20
+
+2. **Instalar dependencias:**
 npm install
-```
 
-**Variables de entorno**
-Crear un archivo `.env` en la raíz del proyecto con (ejemplo):
-```
-MONGODB_URI=<tu_uri_mongodb>
-SECRET=<clave_secreta_para_jwt>
-PORT=3000
-```
+3. **Variables de Entorno (.env):**
+crea un archivo .env y configura los siguientes parámetros esenciales:
+PORT=4000
+MONGODB_URI=tu_conexion_mongo_atlas
+SECRET_KEY_JWT=tu_llave_secreta
+STRIPE_SECRET_KEY=tu_sk_test_de_stripe
+FRONTEND_URL=http://localhost:5173
 
-El proyecto usa `MONGODB_URI` para la conexión a la base de datos y `SECRET` para firmar tokens JWT.
-
-**Ejecutar en desarrollo**
-```bash
+4. **Iniciar servidor:**
 npm run dev
-```
 
-**Endpoints y métodos**
+🛣️ Endpoints Principales
+Usuarios (/users)
+POST /register: Registro de nuevos usuarios.
 
-Base users: `/users`
-- **POST /users/register** : `registerUser` — Registra un nuevo usuario; hashea la contraseña, crea un `Cart` y devuelve el usuario.
-- **POST /users/login** : `loginUser` — Valida credenciales y devuelve un JWT (`SECRET` requerido).
-- **GET /users/verify-user** : `verifyUser` — (Requiere `authorization` header) Devuelve datos del usuario autenticado.
-- **PUT /users/update-user** : `updateUserById` — (Requiere `authorization`) Actualiza `username`, `email` y `password` del usuario autenticado.
-- **DELETE /users/:id** : `deleteUserById` — (Requiere `authorization`) Elimina el usuario autenticado. (Nota: la ruta usa `user/:id` bajo `/users`).
-- **GET /users/users** : `getUsers` — (Requiere `authorization`) Devuelve todos los usuarios.
+POST /login: Autenticación y entrega de token.
 
-Base games: `/games`
-- **GET /games/** : `getAllGames` — Devuelve todos los juegos.
-- **POST /games/** : `createGame` — Crea un nuevo juego con `title`, `price`, `platform`.
-- **PUT /games/:id** : `updateGamebyId` — Actualiza un juego por `id`.
-- **DELETE /games/:id** : `deleteGameById` — Elimina un juego por `id`.
-- **GET /games/:id** : `getGameById` — Obtiene un juego por `id`.
+GET /verify-token: Validación de sesión activa.
 
-**Descripción breve de controladores y modelos**
-- `registerUser` (`src/controllers/user.controller.js`): crea usuario, hashea la contraseña con `bcryptjs`, crea un `Cart` y guarda la referencia.
-- `loginUser`: valida `email` y `password`, firma un JWT con `process.env.SECRET`.
-- `verifyUser`: busca usuario por `req.user.id` (seteado por el middleware) y devuelve datos sin `password`.
-- `updateUserById`: actualiza los campos y rehasea la contraseña antes de guardar.
-- `deleteUserById`: elimina al usuario.
-- `getUsers`: lista todos los usuarios.
+PUT /update-user: Actualización de perfil (Ruta Protegida).
 
-- `getAllGames`, `createGame`, `updateGamebyId`, `deleteGameById`, `getGameById` (`src/controllers/game.controller.js`): CRUD básico para el modelo `Game`.
+Carrito (/carts)
+GET /get-cart: Obtiene el carrito del usuario.
 
-Modelos:
-- `src/models/Users.js`: esquema `User` con `username`, `email`, `password`, `cart` y datos de contacto.
-- `src/models/Games.js`: esquema `Game` con `title`, `price`, `platform`, `description`.
-- `src/models/Cart.js`: esquema `Cart` con array `products` (cantidad, priceID, name, price, img, slug).
+PUT /add-to-cart: Añade o actualiza productos.
 
-**Middleware de autorización**
-- `src/middleware/authorization.js` espera header `authorization` con formato `Bearer <token>` o `Token <token>`. Verifica el token con `process.env.SECRET` y expone `req.user`.
+PUT /clear-cart: Vacía el carrito tras una compra exitosa.
+
+Juegos (/games)
+GET /get-all: Listado completo de productos.
+
+GET /get-one/:id: Detalle de un producto específico.
